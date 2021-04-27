@@ -113,7 +113,7 @@ def polar_plot(data, max_period, min_period):
 	ax.set_facecolor("black")
 
 	# threshold declaration for colormap low cut-off
-	threshold = 5e-3
+	threshold = 1e-3
 
 	# number of levels within our contour
 	nLevels = 1000
