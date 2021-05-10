@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 import argparse
-import yaml
+import scipy
 import sys
 from scipy import signal
 from scipy import fft
@@ -169,9 +169,11 @@ def displacementToWelch(df:pd.DataFrame, fs:int, wind:list, segLength:int, sided
 
     kFactor = .2 #mlm estimate is given as kappa/mlm. not sure how to calculate kappa, but it should be around .002. no effect on direction.
     # !!!! PLOT HERE !!!!!!!!
+
     #MyPolar.plotit(rf, 0, np.array(mlm))
     #estim = 1/np.array(mlm) 
     #Polar.polar_plot(estim * (np.pi/180) * E, 6000, 0)
+    
     #I've commented out MyPolar here and in the header, its the script I've used for visualization
     #needs to be in the same directory, then should work
 
@@ -203,6 +205,7 @@ def mlmEstimate(Ds:np.array, thetaG:list, k:int, d:float):
             for n in range(0, 3):
                 mlmsum += (hmatrix[m] * alpha(f)[m]) *  Ds[m][n] * np.conj(alpha(f)[n] * hmatrix[n])
         mlm.append(mlmsum)
+
     return 1/np.array(mlm)
 
 def memEstimate(firstFive:pd.DataFrame, thetaG:list, k:float, d:float):
