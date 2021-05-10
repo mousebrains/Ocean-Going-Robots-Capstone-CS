@@ -5,7 +5,7 @@ import argparse
 import yaml
 import scipy
 import sys
-import MyPolar
+import Polar
 import spectralAnalysis as sa
 from scipy import signal
 from scipy import fft
@@ -19,7 +19,7 @@ def analyzeWaveData(df:pd.DataFrame, fftmethod:str, dsfmethod:str, sampleRate:in
         firstFive, spectrum = sa.displacementToRfft(df, sampleRate, nperseg) 
     elif fftmethod == "welch":
         firstFive, spectrum = sa.displacementToWelch(df, sampleRate, "boxcar", nperseg, True, "density") 
-    print(waveParameters(firstFive))
+    #print(waveParameters(firstFive))
     return firstFive, spectrum
 
 # This function calculates wave parameters
@@ -65,7 +65,8 @@ if __name__ == "__main__":
     #second parameter = fft method: rfft or welch
     #third parameter = dsf estimation method
     #fourth parameter = sample rate
-    analyzeWaveData(df, "welch", "", args.sample)
+    ff, sp = analyzeWaveData(df, "welch", "", args.sample)
+    print(waveParameters(ff))
 
 
 
