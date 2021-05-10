@@ -4,11 +4,17 @@
 # Driver script
 
 # local script imports
-import waveParamters
+from waveParameters import analyzeWaveData
 # import spectralAnalysis
-import NonDirectionalVisualization
-import Logger
-import Polar
+# from NonDirectionalVisualization import
+
+from Polar import polar_plot
+import sys
+import argparse
+import pandas as pd
+import numpy as np
+
+sampleRate = 1.28
 
 def main():
 
@@ -35,24 +41,27 @@ def main():
 	# 'estimation method (MLM/Entropy)', 'debug' 
 
 	parser = argparse.ArgumentParser()
-    parser.add_argument('--csv', type=str, metavar ="data.csv", required=True, 
-        help = "File name of the csv data to read")
+	parser.add_argument('--csv', type=str, metavar ="data.csv", required=True, help = "File name of the csv data to read")
 
-    args = parser.parse_args()
+	args = parser.parse_args()
 
-    try:
-        fp = open(args.csv, 'r')
-    except FileNotFoundError:
-        raise Exception("No CSV file with the given name found.") from None
+	try:
+		fp = open(args.csv, 'r')
+	except FileNotFoundError:
+		raise Exception("No CSV file with the given name found.") from None
 
-    df = pd.DataFrame(pd.read_csv(fp))
+	df = pd.DataFrame(pd.read_csv(fp))
 
     # empty brackets represent estimation method
-    firstFive, spectrum = analyzeWaveData(df, "welch", "", args.sample)
+	firstFiveWP, spectrum, firstFive = analyzeWaveData(df, "welch", "", sampleRate)
 
-    polar_plot(spectrum, 0.025, 0.56)
+	spectrum *= np.pi/ 180
 
+	data = np.array(firstFive.Czz) * spectrum
 
+	data = np.transpose(data)
+
+	polar_plot(data, 0.025, 0.56)
 
 
 main()

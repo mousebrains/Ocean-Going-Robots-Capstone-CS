@@ -2,10 +2,9 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 import argparse
-import yaml
+# import yaml
 import scipy
 import sys
-import MyPolar
 from scipy import signal
 from scipy import fft
 from matplotlib import pyplot as plt
@@ -186,11 +185,10 @@ def displacementToWelch(df:pd.DataFrame, fs:int, wind:list, segLength:int, sided
     kFactor = .2 #mlm estimate is given as kappa/mlm. not sure how to calculate kappa, but it should be around .002. no effect on direction.
     # !!!! PLOT HERE !!!!!!!!
     
-    MyPolar.plotit(rf, 0, 1/np.array(mlm)) 
     #I've commented out MyPolar here and in the header, its the script I've used for visualization
     #needs to be in the same directory, then should work
 
-    return rf, curr
+    return rf, mlm
 
 def mlmEstimate(Ds:np.array, thetaG:list, k:int, d:float):
     #inverse oof the elements of the cross spectral matrix
@@ -219,7 +217,7 @@ def mlmEstimate(Ds:np.array, thetaG:list, k:int, d:float):
             for n in range(0, 3):
                 mlmsum += np.real((hmatrix[m] * alpha(f)[m]) *  Ds[m][n]   * np.conj(alpha(f)[n] * hmatrix[n]))
         mlm.append(mlmsum)
-    return np.array(mlm)
+    return (1/np.array(mlm))
 
 #Calculate the cross spectrum from a directional spectrum: used for iterative MLM
 def spectrumToCrossSpectrum(S:np.array, k:np.array, theta:np.array, d:float, freq:np.array):
