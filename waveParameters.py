@@ -5,12 +5,9 @@ import argparse
 import yaml
 import scipy
 import sys
-import Polar
 import spectralAnalysis as sa
 from scipy import signal
 from scipy import fft
-from matplotlib import pyplot as plt
-
 
 def analyzeWaveData(df:pd.DataFrame, fftmethod:str, dsfmethod:str, sampleRate:int=10):
     #sampleRate = 1/df.t[1]
@@ -28,7 +25,7 @@ def analyzeWaveData(df:pd.DataFrame, fftmethod:str, dsfmethod:str, sampleRate:in
 #
 #   Outputs: a2, b2
 # 
-def waveParameters(df:pd.DataFrame):
+def waveParameters(df:pd.DataFrame, DS:list):
     pf = pd.Series(dtype=float)
     pf['binSize'] = np.mean(np.diff(df.freq))
     pf["m0"] = df.Czz.sum() * pf.binSize
@@ -38,6 +35,12 @@ def waveParameters(df:pd.DataFrame):
     pf["Tav"] = pf.m0 / pf.m1
     pf["Tzero"] = np.sqrt(pf.m0 / pf.m2)
     pf["Tp"] = 1/df.freq[np.argmax(df.Czz)]
+    #print(np.shape(DS))
+    a1Hat = 1/pf["m0"] * scipy.integrate.simpson(df.a1 * df.Czz, dx=0.0044)
+    b1Hat = 1/pf["m0"] * scipy.integrate.simpson(df.b1 * df.Czz, dx=0.0044)
+    a2Hat = 1/pf["m0"] * scipy.integrate.simpson(df.a2 * df.Czz, dx=0.0044)
+    b2Hat = 1/pf["m0"] * scipy.integrate.simpson(df.b2 * df.Czz, dx=0.0044)
+    pf["Dmean"] = (180/np.pi)*np.arctan2(b1Hat, a1Hat)
     return pf
 
 if __name__ == "__main__":
@@ -66,7 +69,7 @@ if __name__ == "__main__":
     #third parameter = dsf estimation method
     #fourth parameter = sample rate
     ff, sp = analyzeWaveData(df, "welch", "", args.sample)
-    print(waveParameters(ff))
+    print(waveParameters(ff, sp))
 
 
 
