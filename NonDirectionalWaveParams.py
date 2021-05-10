@@ -4,13 +4,16 @@ import matplotlib.pyplot as plt
 import datetime
 import calendar
 
-stn = '179'
+# stn = '188'
+# stn = '236'
+stn = '045'
+
+
 start_date = "05/21/2008 09:00"  # MM/DD/YYYY HH:MM
-dataset = 'archive'  # Enter 'archive' or 'realtime'
+dataset = 'archived'  # Enter 'archive' or 'realtime'
 
 
-# CDIP THREDDS OPeNDAP Dataset URL
-# Archive
+
 data_url = 'http://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/archive/' + \
     stn + 'p1/' + stn + 'p1_historic.nc'
 # Realtime
