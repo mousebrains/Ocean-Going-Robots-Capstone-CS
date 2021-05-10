@@ -203,7 +203,7 @@ def mlmEstimate(Ds:np.array, thetaG:list, k:int, d:float):
         mlmsum = 0
         for m in range(0, 3):
             for n in range(0, 3):
-                mlmsum += (hmatrix[m] * alpha(f)[m]) *  Ds[m][n] * np.conj(alpha(f)[n] * hmatrix[n])
+                mlmsum += np.real((hmatrix[m] * alpha(f)[m]) *  Ds[m][n] * np.conj(alpha(f)[n] * hmatrix[n]))
         mlm.append(mlmsum)
 
     return 1/np.array(mlm)

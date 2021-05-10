@@ -18,7 +18,7 @@ def analyzeWaveData(df:pd.DataFrame, fftmethod:str, dsfmethod:str, sampleRate:in
         firstFive, spectrum = sa.displacementToWelch(df, sampleRate, "boxcar", nperseg, True, "density") 
 
     # print(waveParameters(firstFive))
-    return waveParameters(firstFive), spectrum, firstFive
+    return waveParameters(firstFive, spectrum), spectrum, firstFive
 
 
 # This function calculates wave parameters
