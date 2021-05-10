@@ -19,14 +19,13 @@ import sys
 import matplotlib.pyplot as plt
 import matplotlib.colors as clr
 from matplotlib import cm
-import warnings
 
 
 
 def main():
 
 	
-	# INPUT VALIDATION -------------------------------------------------------------------------
+	# INPUT VALIDATION ##########################################################
 
 	# too many arguments are given 
 	if len(sys.argv) > 2:
@@ -57,26 +56,29 @@ def main():
 		print("Error: the provided input file doesn't exist.")
 		return
 
-	max_period = 0.025	# define max wave period (small Hz value)
-	min_period = 0.56	# define min wave period (large Hz value)
+	min_period = 0.025	# define max wave period (small Hz value)
+	max_period = 0.56	# define min wave period (large Hz value)
 
 	# define data array, 56 x 72 matrix
 	data = np.loadtxt(data_file, delimiter=',')
 
 	# make call to polar_plot to visualize the input data
-	polar_plot(data, max_period, min_period)
+	polar_plot(data, min_period, max_period)
 
 	return
 
-
-def polar_plot(data, max_period, min_period):
+###################################################################################################
+# polar_plot() provides a graphical representation of polar data using MatPlotLib
+# arguments: data = 56 x 72 float matrix, max_period = small Hz value, min_period = large Hz value
+# output: produces a new window pop-out window displaying a polar plot
+def polar_plot(data, min_period, max_period):
 
 	# define coordinates
 
-	#thetas
-	azimuths = np.radians(np.linspace(5, 365, data.shape[1]))	# theta values
+	# thetas
+	azimuths = np.radians(np.linspace(0, 360, data.shape[1]))	# theta values
 
-	#radii
+	# radii
 	zeniths = np.linspace(0.025, 0.58, data.shape[0])	# radius values
 
 	# create variables theta and r as 2D matrices from meshing zeniths and azimuths
@@ -113,7 +115,8 @@ def polar_plot(data, max_period, min_period):
 	ax.set_facecolor("black")
 
 	# threshold declaration for colormap low cut-off
-	threshold = 1e-3
+	threshold = np.amax(data) * 0.02
+	# threshold = 2e-3
 
 	# number of levels within our contour
 	nLevels = 1000
@@ -140,7 +143,8 @@ def polar_plot(data, max_period, min_period):
 
 	# polar plot limits, creates empty inner circle
 	# ax.set_rlim(top=1/3.2, bottom=-0.08)
-	ax.set_rlim(top=1/3.2, bottom=-0.08)
+	#ax.set_rlim(top=1/3.2, bottom=-0.08)
+	ax.set_rlim(top=1/3, bottom=-0.08)
 
 	# color bar creation
 	cbar = fig.colorbar(colorax, orientation="horizontal", ticks=(0, zMax/2, zMax))
