@@ -1,65 +1,26 @@
-import netCDF4
 import numpy as np
 import matplotlib.pyplot as plt
-import datetime
-import calendar
-from NonDirectionalWaveParams import *
+import pandas as pd
 
-waveTime = nc.variables['waveTime'][:]
-Dmean = nc.variables['waveMeanDirection']
-Fq = nc.variables['waveFrequency']
-Ed = nc.variables['waveEnergyDensity']
-
-station_name = nc.variables['metaStationName'][:]
-station_title = station_name.tobytes().decode().split('\x00', 1)[0]
-
-sourceFile = open('demo.txt', 'w')
-print(Fq[:], file=sourceFile)
-sourceFile.close()
-
-# Find nearest value in numpy array
-def find_nearest(array, value):
-    idx = (np.abs(array - value)).argmin()
-    return array[idx]
-
-# Convert to unix timestamp
-def get_unix_timestamp(humanTime, dateFormat):
-    unix_timestamp = int(calendar.timegm(
-        datetime.datetime.strptime(humanTime, dateFormat).timetuple()))
-    return unix_timestamp
-
-# Convert to human readable timestamp
-def get_human_timestamp(unix_timestamp, dateFormat):
-    human_timestamp = datetime.datetime.utcfromtimestamp(
-        int(unix_timestamp)).strftime(dateFormat)
-    return human_timestamp
-
-def main():
-    unix_start = get_unix_timestamp(start_date, '%m/%d/%Y %H:%M')
-    # Find the closest unix timestamp
-    nearest_start = find_nearest(waveTime, unix_start)
-    nearest_index = np.where(waveTime == nearest_start)[0][0]  # Grab the index number of found date
-
-    print('Requsted: ' + get_human_timestamp(unix_start, '%m/%d/%Y %H:%M:%S'))
-    print(' Nearest: ' + get_human_timestamp(nearest_start, '%m/%d/%Y %H:%M:%S'))
-
-    print(start_date)
-    print(unix_start)
+def nonDirectional(df):
+    Fq = df.loc[:,"freq Hz"]
+    Dmean = df.loc[:,"Dmean deg"]
+    Ed = df.loc[:,"energy m*m/Hz"]
 
     # Create figure and specify figure size
-    fig = plt.figure(figsize=(15, 15))
+    plt.figure(figsize=(15, 15))
 
     # Create 2 stacked subplots for Energy Density (Ed) and Mean Direction (Dmean)
     pEd = plt.subplot(2, 1, 1)
-    pEd.step(Fq[:], Ed[nearest_index, :], marker='o', where='mid')
-    pEd.fill_between(Fq[:], Ed[nearest_index, :], alpha=0.5, step="mid")
+    pEd.step(Fq[:], Ed[:], marker='o', where='mid')
+    pEd.fill_between(Fq[:], Ed[:], alpha=0.5, step="mid")
     pDmean = plt.subplot(2, 1, 2, sharex=pEd)
-    pDmean.plot(Fq[:], Dmean[nearest_index, :],
+    pDmean.plot(Fq[:], Dmean[:],
                 color='crimson', marker='o', linestyle="")
 
     # Set title
-    plt.suptitle(station_title + '\n' + get_human_timestamp(nearest_start,
-                                                            '%m/%d/%Y %H:%M') + ' UTC', fontsize=22, y=0.95)
+    # Add more info about buoy
+    plt.suptitle("Oceanside, CA\n", fontsize=22, y=0.95)
 
     # Set tick parameters
     pEd.tick_params(axis='y', which='major', labelsize=12, right='off')
@@ -70,7 +31,7 @@ def main():
     pDmean2y = pDmean.twiny()  # Copy x-axis for Graph #2
 
     # Set axis limits for each plot
-    ymax = np.ceil(max(Ed[nearest_index, :]))
+    ymax = np.ceil(max(Ed[:]))
     pEd.set_xlim(0, 0.6)
     pEd.set_ylim(0, ymax)
     pEd2y.set_xlim(0, 0.6)
@@ -100,5 +61,3 @@ def main():
     pDmean.grid(b=True, which='major', axis='y', alpha=0.3, linestyle='-')
 
     plt.show()
-
-main()
