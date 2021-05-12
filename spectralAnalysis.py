@@ -14,8 +14,6 @@ from scipy import fft
 #
 def displacementToWelch(df:pd.DataFrame, fs:int, wind:list, segLength:int, sided:bool, scale:list) -> pd.DataFrame:
 
-    #calculate mission duration in seconds
-    #missionDuration = df['t'].max()
     #Calculate displacement series
     
     xSeries = 1 * mkSeries(df, "x")
