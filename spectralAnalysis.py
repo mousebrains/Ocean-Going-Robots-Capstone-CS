@@ -16,8 +16,6 @@ from scipy import fft
 #
 def displacementToWelch(df:pd.DataFrame, method:str, fs:int, wind:list, segLength:int, sided:bool, scale:list) -> pd.DataFrame:
 
-    #calculate mission duration in seconds
-    #missionDuration = df['t'].max()
     #Calculate displacement series
     
     xSeries = 1 * mkSeries(df, "x")
@@ -390,4 +388,4 @@ def displacementToRfft(df:pd.DataFrame, fs:int, nseg:int) -> pd.DataFrame:
     k = rf.k.to_numpy()
 
     mlm = mlmEstimate(Ds, thetaG, k, d)
-    return rf, 1/mlm
+    return rf, mlm
