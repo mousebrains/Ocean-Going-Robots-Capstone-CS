@@ -15,7 +15,7 @@ def analyzeWaveData(df:pd.DataFrame, fftmethod:str, dsfmethod:str, sampleRate:in
     if fftmethod == "rfft":
         firstFive, spectrum = sa.displacementToRfft(df, sampleRate, nperseg) 
     elif fftmethod == "welch":
-        firstFive, spectrum = sa.displacementToWelch(df, sampleRate, "boxcar", nperseg, True, "density") 
+        firstFive, spectrum = sa.displacementToWelch(df, dsfmethod, sampleRate, "boxcar", nperseg, True, "density") 
 
     # print(waveParameters(firstFive))
     return waveParameters(firstFive, spectrum), spectrum, firstFive
@@ -29,6 +29,7 @@ def analyzeWaveData(df:pd.DataFrame, fftmethod:str, dsfmethod:str, sampleRate:in
 # 
 def waveParameters(df:pd.DataFrame, DS:list):
     pf = pd.Series(dtype=float)
+    #nondirectional parameters
     pf['binSize'] = np.mean(np.diff(df.freq))
     pf["m0"] = df.Czz.sum() * pf.binSize
     pf["m1"] = (df.Czz * df.freq).sum() * pf.binSize
@@ -37,12 +38,16 @@ def waveParameters(df:pd.DataFrame, DS:list):
     pf["Tav"] = pf.m0 / pf.m1
     pf["Tzero"] = np.sqrt(pf.m0 / pf.m2)
     pf["Tp"] = 1/df.freq[np.argmax(df.Czz)]
-    #print(np.shape(DS))
-    a1Hat = 1/pf["m0"] * scipy.integrate.simpson(df.a1 * df.Czz, dx=0.0044)
-    b1Hat = 1/pf["m0"] * scipy.integrate.simpson(df.b1 * df.Czz, dx=0.0044)
-    a2Hat = 1/pf["m0"] * scipy.integrate.simpson(df.a2 * df.Czz, dx=0.0044)
-    b2Hat = 1/pf["m0"] * scipy.integrate.simpson(df.b2 * df.Czz, dx=0.0044)
-    pf["Dmean"] = (180/np.pi)*np.arctan2(b1Hat, a1Hat)
+
+    a1Hat = 1/pf["m0"] * scipy.integrate.simpson(df.a1 * df.Czz, dx=pf['binSize'])
+    b1Hat = 1/pf["m0"] * scipy.integrate.simpson(df.b1 * df.Czz, dx=pf['binSize'])
+    index = np.where(df.freq == 1/pf.Tp)[0] #np.around((1/pf.Tp) / pf.binSize) 
+    a1Peak = df.a1[index]
+    b1Peak = df.b1[index] 
+    #directinal parameters
+    pf["Dmean"] = 270-(180/np.pi)*np.arctan2(b1Hat, a1Hat)
+    pf["Dpeak"] = 270-(180/np.pi)*np.arctan2(b1Peak, a1Peak)
+
     return pf
 
 if __name__ == "__main__":
