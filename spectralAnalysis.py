@@ -2,12 +2,90 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 import argparse
-import scipy
 import sys
 from scipy import signal
 from scipy import fft
+   
+#This function calculates PSD's and Fourier Coeffecients for Wave Spectra using numpys welch method
+#
+#   Inputs: Pandas.DataFrame, sampling rate = fs, segment length (welch) = segLength, one vs two-sided = sided, fft scale (density vs spectrum)
+#
+#   Outputs: Pandas.DataFrame
+#
+def displacementToWelch(df:pd.DataFrame, fs:int, wind:list, segLength:int, sided:bool, scale:list) -> pd.DataFrame:
 
-#This function calculates PSD's and Fourier Coeffecients for Wave Spectra using numpys rfft function
+    #calculate mission duration in seconds
+    #missionDuration = df['t'].max()
+    #Calculate displacement series
+    
+    xSeries = 1 * mkSeries(df, "x")
+    ySeries = -1 * mkSeries(df, "y")
+    zSeries = mkSeries(df, "z")
+    dt = 1/fs
+    
+    #Calculate psd 
+    Ds = seriesToCrossSpectrum(zSeries, xSeries, ySeries, fs, wind, segLength, sided, scale)
+    #Calculate the inverse of the cross spectrum (used for imlm)
+    Gmn = zxyMatrixInverse(Ds)
+    #probably a better way to do this, but we just need the frequency.
+    xF, _ = signal.welch(xSeries, fs, window=wind, nperseg=segLength, return_onesided=sided, scaling=scale, detrend=False)
+
+    rf = pd.DataFrame({'freq':xF[1:]})
+
+    #Save the co and quadrature spectra:
+    #seriestToCrossSpectrum returns a 3x3 matrix of cross spectrums (zz, zx, zy) = ((0, 0), (0, 1), etc
+    rf['Czz'] = np.real(Ds[0][0])
+    rf['Cxx'] = np.real(Ds[1][1])
+    rf['Cyy'] = np.real(Ds[2][2])
+    rf['Cxy'] = np.real(Ds[1][2])
+    rf['Qzx'] = np.imag(Ds[0][1])
+    rf['Qzy'] = np.imag(Ds[0][2])
+
+    
+
+    #only resolve freq greater than 0 and less than .6
+    rf = rf[rf.freq > 0]
+    #rf = rf[rf.freq < .6]
+    d = 571
+
+    #create freq and direction matricies for linalg
+    freq = rf.freq.to_numpy()
+    theta = np.radians(np.arange(0, 360+1, 5))
+    (freqG, thetaG) = np.meshgrid(freq, theta)
+    #print(np.shape(theta))
+    #wave number from dispersion relation
+    rf['k'] = waveNum(rf.freq)
+    #rf['k'] = np.sqrt((rf['Cxx'] + rf['Cyy'])/rf['Czz'])
+    k = rf.k.to_numpy()
+
+    mlm = mlmEstimate(Gmn, thetaG, k, d)
+    #mem = memEstimate(rf, thetaG, k, d)
+    
+    #gradient descent convergence variables
+    beta =  5
+    gamma = 50
+
+    #curr = imlmEstimate(mlm, rf.Czz, freq, theta, d, beta, gamma)
+    #mlm, imlm, and mem give us more accurate estimations using the previously calculated cross spectral matrix.
+    #so we can "recalculate" our cross spectral matrix to give us more accurate fourier coeffecients/wave parameters
+    newst = spectrumToCrossSpectrum(mlm, k, theta, d, freq)
+    Cxx = np.real(newst[1][1])
+    Cyy = np.real(newst[2][2])
+    Czz = np.real(newst[0][0])
+    Cxy = np.real(newst[1][2])
+    Qzx = np.imag(newst[0][1])
+    Qzy = np.imag(newst[0][2])
+
+    #Calculate Fourier Coeffecients
+    rf['a0'] = newst[0][0]
+    rf['a1'], rf['b1'] = firstOrderFourier(Qzx, Cxx, Cyy, Czz, Qzy)
+    rf['a2'], rf['b2'] = secondOrderFourier(Cxx, Cyy, Cyy, Cxy)
+
+    kFactor = .2 #mlm estimate is given as kappa/mlm. not sure how to calculate kappa, but it should be around .002. no effect on direction.
+
+    return rf, kFactor/mlm
+
+#This function calculates PSD's and Fourier Coeffecients for Wave Spectra using numpys rfft function: unfinished
 #
 #   Inputs: Pandas.DataFrame, sampling rate = fs, segment length (welch) = segLength, one vs two-sided = sided, fft scale (density vs spectrum)
 #
@@ -16,8 +94,8 @@ from scipy import fft
 # todo: convert from accel first, figure out format after export from ECE team
 def displacementToRfft(df:pd.DataFrame, fs:int, nseg:int) -> pd.DataFrame:
 
+    print("Use displacementToWelch. No guarentees on the results of displacementToRfft")
     #Calculate displacement series
-    
     xSeries = 1 * mkSeries(df, "x")
     ySeries = -1 * mkSeries(df, "y")
     zSeries = mkSeries(df, "z")
@@ -52,132 +130,22 @@ def displacementToRfft(df:pd.DataFrame, fs:int, nseg:int) -> pd.DataFrame:
     
     #only resolve freq greater than 0 and less than .6
     rf = rf[rf.freq > 0]
-
-    #rf = rf[rf.freq < .6]
-    d = 571
+    d = 571 #depth
     #create freq and direction matricies for linalg
     freq = rf.freq.to_numpy()
     theta = np.radians(np.arange(0, 360+1, 5))
     (freqG, thetaG) = np.meshgrid(freq, theta)
     
-    #inverse oof the elements of the cross spectral matrix
+    #inverse of the elements of the cross spectral matrix
     Ds = Gmnx(rf.Z, rf.X, rf.Y, dt, N)
 
     #wave number from dispersion relation
     rf['k'] = waveNum(rf.freq)
-    #rf['k'] = np.sqrt((rf['Cxx'] + rf['Cyy'])/rf['Czz'])
     k = rf.k.to_numpy()
 
     mlm = mlmEstimate(Ds, thetaG, k, d)
+    return rf, 1/mlm
 
-
-    kFactor = .2 #mlm estimate is given as kappa/mlm. not sure how to calculate kappa, but it should be around .002. no effect on direction.
-    # !!!! PLOT HERE !!!!!!!!
-    
-    #Polar.polar_plot(rf, 0, 1/np.array(mlm)) 
-    #Polar.polar_plot(rf, 0, 1/np.array(mlm))
-
-    return rf, mlm
-    
-#This function calculates PSD's and Fourier Coeffecients for Wave Spectra using numpys welch method
-#
-#   Inputs: Pandas.DataFrame, sampling rate = fs, segment length (welch) = segLength, one vs two-sided = sided, fft scale (density vs spectrum)
-#
-#   Outputs: Pandas.DataFrame
-#
-def displacementToWelch(df:pd.DataFrame, fs:int, wind:list, segLength:int, sided:bool, scale:list) -> pd.DataFrame:
-
-    #calculate mission duration in seconds
-    #missionDuration = df['t'].max()
-    #Calculate displacement series
-    
-    xSeries = 1 * mkSeries(df, "x")
-    ySeries = -1 * mkSeries(df, "y")
-    zSeries = mkSeries(df, "z")
-    dt = 1/fs
-    
-    #Calculate psd 
-    Ds = seriesToCrossSpectrum(zSeries, xSeries, ySeries, fs, wind, segLength, sided, scale)
-    Gmn = zxyMatrixInverse(Ds)
-
-    xF, _ = signal.welch(xSeries, fs, window=wind, nperseg=segLength, return_onesided=sided, scaling=scale, detrend=False)
-    # yF, yP = signal.welch(ySeries, fs, window=wind, nperseg=segLength, return_onesided=sided, scaling=scale, detrend=False)
-    # zF, zP = signal.welch(zSeries, fs, window=wind, nperseg=segLength, return_onesided=sided, scaling=scale, detrend=False)
-    rf = pd.DataFrame({'freq':xF[1:]})
-
-    
-    # rf['Cxx'] = np.real(xP)
-    # rf['Cyy'] = np.real(yP)
-    # rf['Czz'] = np.real(zP)
-    rf['Cxx'] = np.real(Ds[1][1])
-    rf['Cyy'] = np.real(Ds[2][2])
-    rf['Czz'] = np.real(Ds[0][0])
-    rf['Cxy'] = np.real(Ds[1][2])
-    rf['Qzx'] = np.imag(Ds[0][1])
-    rf['Qzy'] = np.imag(Ds[0][2])
-
-    # #Calculate the co and quadrature spectra
-    # #discard the frequency, values are the same for our given fs and nperseg
-    
-    # rf['Cxy'] = np.real(signal.csd(xSeries, ySeries, fs, window=wind, nperseg=segLength, return_onesided=sided,  scaling=scale)[1])
-    # rf['Qzx'] = np.imag(signal.csd(zSeries, xSeries, fs, window=wind, nperseg=segLength, return_onesided=sided,  scaling=scale)[1])
-    # rf['Qzy'] = np.imag(signal.csd(zSeries, ySeries, fs, window=wind, nperseg=segLength, return_onesided=sided,  scaling=scale)[1])
-
-
-    #Calculate Fourier Components
-    
-    # rf['a0'] = zeroOrderFourier(rf['Czz'])
-    # rf['a1'], rf['b1'] = firstOrderFourier(rf['Qzx'], rf['Cxx'], rf['Cyy'], rf['Czz'], rf['Qzy'])
-    # rf['a2'], rf['b2'] = secondOrderFourier(rf['Cxx'], rf['Cyy'], rf['Cyy'], rf['Cxy'])
-
-    
-    #only resolve freq greater than 0 and less than .6
-    rf = rf[rf.freq > 0]
-    #rf = rf[rf.freq < .6]
-    d = 571
-
-    #create freq and direction matricies for linalg
-    freq = rf.freq.to_numpy()
-    theta = np.radians(np.arange(0, 360+1, 5))
-    (freqG, thetaG) = np.meshgrid(freq, theta)
-    #print(np.shape(theta))
-    #wave number from dispersion relation
-    rf['k'] = waveNum(rf.freq)
-    #rf['k'] = np.sqrt((rf['Cxx'] + rf['Cyy'])/rf['Czz'])
-    k = rf.k.to_numpy()
-
-    mlm = mlmEstimate(Gmn, thetaG, k, d)
-    #mem = memEstimate(rf, thetaG, k, d)
-    
-    #gradient descent convergence variables
-    beta =  5
-    gamma = 50
-
-    #curr = imlmEstimate(mlm, rf.Czz, freq, theta, d, beta, gamma)
-    newst = spectrumToCrossSpectrum(mlm, k, theta, d, freq)
-    Cxx = np.real(newst[1][1])
-    Cyy = np.real(newst[2][2])
-    Czz = np.real(newst[0][0])
-    Cxy = np.real(newst[1][2])
-    Qzx = np.imag(newst[0][1])
-    Qzy = np.imag(newst[0][2])
-
-
-    rf['a0'] = newst[0][0]
-    rf['a1'], rf['b1'] = firstOrderFourier(Qzx, Cxx, Cyy, Czz, Qzy)
-    rf['a2'], rf['b2'] = secondOrderFourier(Cxx, Cyy, Cyy, Cxy)
-
-    kFactor = .2 #mlm estimate is given as kappa/mlm. not sure how to calculate kappa, but it should be around .002. no effect on direction.
-    # !!!! PLOT HERE !!!!!!!!
-
-    #MyPolar.plotit(rf, 0, np.array(mlm))
-    #estim = 1/np.array(mlm) 
-    #Polar.polar_plot(estim * (np.pi/180) * E, 6000, 0)
-    
-    #I've commented out MyPolar here and in the header, its the script I've used for visualization
-    #needs to be in the same directory, then should work
-
-    return rf, mlm
 
 def mlmEstimate(Ds:np.array, thetaG:list, k:int, d:float):
     #inverse oof the elements of the cross spectral matrix
@@ -203,9 +171,8 @@ def mlmEstimate(Ds:np.array, thetaG:list, k:int, d:float):
         mlmsum = 0
         for m in range(0, 3):
             for n in range(0, 3):
-                mlmsum += np.real((hmatrix[m] * alpha(f)[m]) *  Ds[m][n] * np.conj(alpha(f)[n] * hmatrix[n]))
+                mlmsum += (hmatrix[m] * alpha(f)[m]) *  Ds[m][n] * np.conj(alpha(f)[n] * hmatrix[n])
         mlm.append(mlmsum)
-
     return 1/np.array(mlm)
 
 def memEstimate(firstFive:pd.DataFrame, thetaG:list, k:float, d:float):
