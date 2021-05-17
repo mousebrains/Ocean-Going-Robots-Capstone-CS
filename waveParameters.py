@@ -2,15 +2,12 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 import argparse
-import yaml
+# import yaml
 import scipy
 import sys
-import MyPolar
 import spectralAnalysis as sa
 from scipy import signal
 from scipy import fft
-from matplotlib import pyplot as plt
-
 
 def analyzeWaveData(df:pd.DataFrame, fftmethod:str, dsfmethod:str, sampleRate:int=10):
     #sampleRate = 1/df.t[1]
@@ -18,9 +15,11 @@ def analyzeWaveData(df:pd.DataFrame, fftmethod:str, dsfmethod:str, sampleRate:in
     if fftmethod == "rfft":
         firstFive, spectrum = sa.displacementToRfft(df, sampleRate, nperseg) 
     elif fftmethod == "welch":
-        firstFive, spectrum = sa.displacementToWelch(df, sampleRate, "boxcar", nperseg, True, "density") 
-    print(waveParameters(firstFive))
-    return firstFive, spectrum
+        firstFive, spectrum = sa.displacementToWelch(df, dsfmethod, sampleRate, "boxcar", nperseg, True, "density") 
+
+    # print(waveParameters(firstFive))
+    return waveParameters(firstFive, spectrum), spectrum, firstFive
+
 
 # This function calculates wave parameters
 #
@@ -28,8 +27,9 @@ def analyzeWaveData(df:pd.DataFrame, fftmethod:str, dsfmethod:str, sampleRate:in
 #
 #   Outputs: a2, b2
 # 
-def waveParameters(df:pd.DataFrame):
+def waveParameters(df:pd.DataFrame, DS:list):
     pf = pd.Series(dtype=float)
+    #nondirectional parameters
     pf['binSize'] = np.mean(np.diff(df.freq))
     pf["m0"] = df.Czz.sum() * pf.binSize
     pf["m1"] = (df.Czz * df.freq).sum() * pf.binSize
@@ -38,6 +38,16 @@ def waveParameters(df:pd.DataFrame):
     pf["Tav"] = pf.m0 / pf.m1
     pf["Tzero"] = np.sqrt(pf.m0 / pf.m2)
     pf["Tp"] = 1/df.freq[np.argmax(df.Czz)]
+
+    a1Hat = 1/pf["m0"] * scipy.integrate.simpson(df.a1 * df.Czz, dx=pf['binSize'])
+    b1Hat = 1/pf["m0"] * scipy.integrate.simpson(df.b1 * df.Czz, dx=pf['binSize'])
+    index = np.where(df.freq == 1/pf.Tp)[0] #np.around((1/pf.Tp) / pf.binSize) 
+    a1Peak = df.a1[index]
+    b1Peak = df.b1[index] 
+    #directinal parameters
+    pf["Dmean"] = 270-(180/np.pi)*np.arctan2(b1Hat, a1Hat)
+    pf["Dpeak"] = 270-(180/np.pi)*np.arctan2(b1Peak, a1Peak)
+
     return pf
 
 if __name__ == "__main__":
@@ -65,7 +75,8 @@ if __name__ == "__main__":
     #second parameter = fft method: rfft or welch
     #third parameter = dsf estimation method
     #fourth parameter = sample rate
-    analyzeWaveData(df, "welch", "", args.sample)
+    ff, sp = analyzeWaveData(df, "welch", "", args.sample)
+    print(waveParameters(ff, sp))
 
 
 
