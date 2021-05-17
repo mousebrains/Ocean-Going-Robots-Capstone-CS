@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import datetime
 import calendar
-from waveSim import *
+from NonDirectionalWaveParams import *
 
 waveTime = nc.variables['waveTime'][:]
 Dmean = nc.variables['waveMeanDirection']
