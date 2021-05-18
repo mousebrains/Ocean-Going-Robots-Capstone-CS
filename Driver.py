@@ -4,11 +4,13 @@
 # Driver script
 
 # local script imports
+import scipy as sp
 from waveParameters import analyzeWaveData
 # import spectralAnalysis
 # from NonDirectionalVisualization import
 
 from Polar import polar_plot
+from NonDirectionalVisualization import nonDirectional
 import sys
 import argparse
 import pandas as pd
@@ -63,5 +65,10 @@ def main():
 
 	polar_plot(data, 0.025, 0.56)
 
+	spectrum2 = firstFive.Czz
+	freqBins = firstFive.freq
+
+	
+	nonDirectional(freqBins, spectrum2)
 
 main()
