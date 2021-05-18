@@ -41,7 +41,9 @@ This system takes in raw wave data and will display the directional (polar plot)
 - Create a histogram plot of the nondirectional wave data. Wave energy density (m^2/Hz) on the y-axis and Wave Frequency (Hz) x-axis
 
 ### Polar.py
-- Creates a polar plot of the directional data. The plot is set up so that the degrees shown are direction (N, S, E, W) i.e. 90° is due east. Periods (seconds) and Energy density (m^2/Hz/deg)
+- Creates a polar plot of the directional data. The plot is set up so that the degrees shown are direction (N, S, E, W) i.e. 90° is due east. Periods (seconds) and Energy density (m^2/Hz/deg).
+
+	`python Polar.py {data_file.csv}`
 
 ### spectralAnalysis.py
 - Estimates the directional spectrum from wave readings

@@ -76,7 +76,7 @@ def polar_plot(data, min_period, max_period):
 	# define coordinates
 
 	# thetas
-	azimuths = np.radians(np.linspace(0, 360, data.shape[1]))	# theta values
+	azimuths = np.radians(np.linspace(5, 365, data.shape[1]))	# theta values
 
 	# radii
 	zeniths = np.linspace(min_period, max_period, data.shape[0])	# radius values
