@@ -5,7 +5,9 @@ This system takes in raw wave data and will display the directional (polar plot)
 
 ## How to Run, Execute and Understand the System
  - Clone the repository
-
+ 
+	`git clone {repo url}`
+	
       `cd {repo name}`
  - You are now in the newly created directory
 
@@ -26,6 +28,7 @@ This system takes in raw wave data and will display the directional (polar plot)
       `python3 Driver.py --csv={data file}`
       
   - Where {data file} is a .csv of a time series of displacements in the x,y,z direction for a given station
+  - i.e. station222.csv
   - If python3 is not downloaded, the latest release can be found here https://www.python.org/downloads/
   - You will then see two windows pop up. The polar plot is the directional data, and the histogram is the nondirectional
 
