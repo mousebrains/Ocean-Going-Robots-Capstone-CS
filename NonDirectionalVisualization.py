@@ -45,6 +45,8 @@ def nonDirectional(freqBins, spectrum2):
     Fq = freqBins.loc[:,"freq"]
     Ed = spectrum2.loc[:,"Czz"]
 
+    print(Fq)
+    print(Ed)
 
     fig = plt.figure(figsize=(15, 15))
 
@@ -99,3 +101,5 @@ def nonDirectional(freqBins, spectrum2):
     pDmean.grid(b=True, which='major', axis='y', alpha=0.3, linestyle='-')
 
     plt.show()
+
+
