@@ -5,6 +5,7 @@
 
 # local script imports
 from waveParameters import analyzeWaveData
+from waveParameters import waveParameters
 # import spectralAnalysis
 # from NonDirectionalVisualization import
 
@@ -53,8 +54,8 @@ def main():
 	df = pd.DataFrame(pd.read_csv(fp))
 
     # empty brackets represent estimation method
-	firstFiveWP, spectrum, firstFive = analyzeWaveData(df, "welch", "", sampleRate)
-
+	spectrum, firstFive = analyzeWaveData(df, "welch", "mem", sampleRate)
+	#print(firstFiveWP)
 	spectrum *= np.pi/ 180
 
 	data = np.array(firstFive.Czz) * spectrum
@@ -62,6 +63,8 @@ def main():
 	data = np.transpose(data)
 
 	polar_plot(data, 0.025, 0.56)
+
+	print(waveParameters(firstFive, spectrum))
 
 
 main()
