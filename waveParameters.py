@@ -16,9 +16,8 @@ def analyzeWaveData(df:pd.DataFrame, fftmethod:str, dsfmethod:str, sampleRate:in
         firstFive, spectrum = sa.displacementToRfft(df, sampleRate, nperseg) 
     elif fftmethod == "welch":
         firstFive, spectrum = sa.displacementToWelch(df, dsfmethod, sampleRate, "boxcar", nperseg, True, "density") 
-
-    # print(waveParameters(firstFive))
-    return waveParameters(firstFive, spectrum), spectrum, firstFive
+    test = spectrum
+    return spectrum, firstFive
 
 
 # This function calculates wave parameters
@@ -48,16 +47,6 @@ def waveParameters(df:pd.DataFrame, Ds:list):
             max = temp
     pf['Dpeak'] = ind * 5
 
-    '''
-    a1Hat = 1/pf["m0"] * scipy.integrate.simpson(df.a1 * df.Czz, dx=pf['binSize'])
-    b1Hat = 1/pf["m0"] * scipy.integrate.simpson(df.b1 * df.Czz, dx=pf['binSize'])
-    index = np.where(df.freq == 1/pf.Tp)[0] #np.around((1/pf.Tp) / pf.binSize) 
-    a1Peak = df.a1[index]
-    b1Peak = df.b1[index] 
-    #directinal parameters
-    pf["Dmean"] = 270-(180/np.pi)*np.arctan2(b1Hat, a1Hat)
-    pf["Dpeak"] = 270-(180/np.pi)*np.arctan2(b1Peak, a1Peak)
-    '''
 
     return pf
 
@@ -86,8 +75,9 @@ if __name__ == "__main__":
     #second parameter = fft method: rfft or welch
     #third parameter = dsf estimation method
     #fourth parameter = sample rate
-    wp, ff, sp = analyzeWaveData(df, "welch", "", args.sample)
-    print(wp)
+    ff, sp = analyzeWaveData(df, "welch", "mlm", args.sample)
+    #print(waveParameters(ff, sp))
+
 
 
 

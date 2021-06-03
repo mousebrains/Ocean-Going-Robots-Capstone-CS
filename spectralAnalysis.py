@@ -7,6 +7,7 @@ import argparse
 import sys
 from scipy import signal
 from scipy import fft
+from scipy import optimize
    
 #This function calculates PSD's and Fourier Coeffecients for Wave Spectra using numpys welch method
 #
@@ -17,7 +18,6 @@ from scipy import fft
 def displacementToWelch(df:pd.DataFrame, method:str, fs:int, wind:list, segLength:int, sided:bool, scale:list) -> pd.DataFrame:
 
     #Calculate displacement series
-    
     xSeries = 1 * mkSeries(df, "x")
     ySeries = -1 * mkSeries(df, "y")
     zSeries = mkSeries(df, "z")
@@ -40,31 +40,42 @@ def displacementToWelch(df:pd.DataFrame, method:str, fs:int, wind:list, segLengt
     rf['Cxy'] = np.real(Ds[1][2])
     rf['Qzx'] = np.imag(Ds[0][1])
     rf['Qzy'] = np.imag(Ds[0][2])
-
     #only resolve freq greater than 0
     rf = rf[rf.freq > 0]
-    d = 571
+    d = 60
 
     #create freq and direction matricies for linalg
     freq = rf.freq.to_numpy()
     theta = np.radians(np.arange(0, 360+1, 5))
     (freqG, thetaG) = np.meshgrid(freq, theta)
 
+    rf['a0'] = rf.Czz
+    rf['a1'], rf['b1'] = firstOrderFourier(rf.Qzx, rf.Cxx, rf.Cyy, rf.Czz, rf.Qzy)
+    rf['a2'], rf['b2'] = secondOrderFourier(rf.Cxx, rf.Cyy, rf.Czz, rf.Cxy)
+
     #wave number from dispersion relation
     rf['k'] = waveNum(rf.freq)
     k = rf.k.to_numpy()
-
-    mlm = mlmEstimate(Gmn, thetaG, k, d)
+    if(method == 'mlm'):
+        estimate = mlmEstimate(Gmn, thetaG, k, d)
+    elif(method == 'imlm'):
+        #gradient descent convergence variables
+        #for cdip= 2.5/10
+        beta =  2.5
+        gamma = 10
+        mlm = mlmEstimate(Gmn, thetaG, k, d)
+        estimate = imlmEstimate(Ds, freq, theta, d, k, beta, gamma)
+    elif(method == "mem"):
+        estimate = bettermem(rf, Ds, theta, freq)
     #mem = memEstimate(rf, thetaG, k, d)
     
-    #gradient descent convergence variables
-    beta =  5
-    gamma = 50
+    #estimate = np.transpose(estimate)
+    
 
     #curr = imlmEstimate(mlm, rf.Czz, freq, theta, d, beta, gamma)
     #mlm, imlm, and mem give us more accurate estimations using the previously calculated cross spectral matrix.
     #so we can "recalculate" our cross spectral matrix to give us more accurate fourier coeffecients/wave parameters
-    newst = spectrumToCrossSpectrum(mlm, k, theta, d, freq)
+    newst = spectrumToCrossSpectrum(np.array(rf.Czz) * estimate, k, theta, d, freq)
     Cxx = np.real(newst[1][1])
     Cyy = np.real(newst[2][2])
     Czz = np.real(newst[0][0])
@@ -72,14 +83,22 @@ def displacementToWelch(df:pd.DataFrame, method:str, fs:int, wind:list, segLengt
     Qzx = np.imag(newst[0][1])
     Qzy = np.imag(newst[0][2])
 
-    #Calculate Fourier Coeffecients
-    rf['a0'] = newst[0][0]
-    rf['a1'], rf['b1'] = firstOrderFourier(Qzx, Cxx, Cyy, Czz, Qzy)
-    rf['a2'], rf['b2'] = secondOrderFourier(Cxx, Cyy, Cyy, Cxy)
+    # rf['Czz'] = Czz
+    # rf['Cxx'] = Cxx
+    # rf['Cyy'] = Cyy
+    # rf['Cxy'] = Cxy
+    # rf['Qzx'] = Qzx
+    # rf['Qzy'] = Qzy
+
+    
+    # #Calculate Fourier Coeffecients
+    # rf['a0'] = Czz
+    # rf['a1'], rf['b1'] = firstOrderFourier(Qzx, Cxx, Cyy, Czz, Qzy)
+    # rf['a2'], rf['b2'] = secondOrderFourier(Cxx, Cyy, Czz, Cxy)
 
     kFactor = .2 #mlm estimate is given as kappa/mlm. not sure how to calculate kappa, but it should be around .002. no effect on direction.
 
-    return rf, mlm
+    return rf, estimate
 
 #This function calculates estimates the directional spectrum using the maximum likelihood method as described in Benoit (1997)
 #
@@ -121,8 +140,8 @@ def memEstimate(firstFive:pd.DataFrame, thetaG:list, k:float, d:float):
     i = 1j
     c1 = firstFive.a1 + (i * firstFive.b1)
     c2 = firstFive.a2 + (i * firstFive.b2)
-    c1Conjugate = np.transpose(c1)
-    c2Conjugate = np.transpose(c2)
+    c1Conjugate = np.conjugate(c1)
+    c2Conjugate = np.conjugate(c2) 
     F1 = (c1 - c2*c1Conjugate)/(1-np.abs(c1)**2)
     F2 = c2 - (c1 * F1)
     mem = []
@@ -130,7 +149,7 @@ def memEstimate(firstFive:pd.DataFrame, thetaG:list, k:float, d:float):
         numerator = 1 - (F1 * c1Conjugate) - (F2 * c2Conjugate)
         denom = np.abs(1 - F1*(np.cos(delta) - i * np.sin(delta)) - F2 * (np.cos(2*delta) - i * np.sin(2*delta)))**2
         mem.append(1/(2*np.pi) * (numerator/denom))
-    return mem
+    return np.array(np.real(mem))
 
 #This function calculates estimates the directional spectrum using the improved maximum entropy method as described in Benoit (1997)
 #WIPWIPWIP
@@ -138,21 +157,53 @@ def memEstimate(firstFive:pd.DataFrame, thetaG:list, k:float, d:float):
 #
 #   Outputs: np.array estimate of the mem
 #
-def bettermem():
-    alpha0 = np.full(73, 1)
-    alpha1 = np.cos(theta)
-    alpha2 = np.sin(theta)
-    alpha3 = np.cos(2*theta)
-    alpha4 = np.sin(2*theta) 
-    beta1 = a1/a0
-    beta2 = b1/a0
-    beta3 = a2/a0
-    beta4 = b2/a0
-    alphaMatrix = [alpha0, alpha1, alpha2, alpha3, alpha4]
-    betaMatrix = [beta1, beta2, beta3, beta4]
-    for i in range(4):
-        integrandsum = 1 
-        integrand = (betaMatrix[i] - alphaMatrix[i+1]) @ np.exp()
+def bettermem(ff:pd.DataFrame, cross:list, thetaG:list, freqG:list):
+    curr=[]
+    estimate = []
+    result = []
+    def fun(x, theta, y):
+        #print(theta)
+        dat = np.exp(-x[0]-x[1]*np.cos(theta)-x[2]*np.sin(theta)-x[3]*np.cos(2*theta)-x[4]*np.sin(2*theta))
+        a1 = np.trapz(dat * np.cos(theta), x=theta, axis=0)
+        b1 = np.trapz(dat * np.sin(theta), x=theta, axis=0)
+        a2 = np.trapz(dat * np.cos(2*theta), x=theta, axis=0)
+        b2 = np.trapz(dat * np.sin(2*theta), x=theta, axis=0)
+        coef = [1, a1, b1, a2, b2]
+        print(coef)
+        return np.sqrt((np.array(coef) - np.array(y))**2)
+    for theta in thetaG:
+        for i in range(len(freqG)):
+            y = [0, 0, 0, 0, 0]
+            best = [0, 0, 0, 0, 0]
+            y[0] = ff.a0[i]
+            y[1] = ff.a1[i]
+            y[2] = ff.b2[i]
+            y[3] = ff.a2[i]
+            y[4] = ff.b2[i]
+            #print(np.shape(cross[:,:,i]))
+            #guess = (sp.linalg.orth(sp.linalg.eig(cross[:,:,i])[1]))
+            #print(guess)
+            #best[0] = cross[0][0][i]
+            #best[1], best[2] = firstOrderFourier(cross[0][1][i], cross[1][1][i], cross[2][2][i], best[0], cross[0][2][i])
+            #best[3], best[4] = secondOrderFourier(cross[1][1][i], cross[2][2][i], best[0], cross[1][2][i])
+            #print(best)
+            result = optimize.least_squares(fun, [1, 1, 1, 1, 1], method="lm", args=(thetaG, y))
+            curr.append(np.exp(-result.x[0]-result.x[1]*np.cos(theta)-result.x[2]*np.sin(theta)-result.x[3]*np.cos(2*theta)-result.x[4]*np.sin(2*theta)))
+            #print(np.shape(result.x))
+        estimate.append(curr)
+        curr = []
+        #print(np.shape(estimate))
+    return np.array(estimate)
+    
+
+        
+
+
+
+
+
+    
+
 
 #This function calculates estimates the directional spectrum using the iterative maximum likelihood method as described in Benoit (1997)
 #   wipwipwip
@@ -160,20 +211,22 @@ def bettermem():
 #           betaHP/gammaHP = gradient descent parameters
 #   Outputs: np.array estimate of the imlm
 #
-def imlmEstimate(initialEstimate:list, initialCzz:list, freq:list, theta:list, d:float, betaHP:int, gammaHP:int):
+def imlmEstimate(Gmn:list, freq:list, theta:list, d:float, k:list, betaHP:int, gammaHP:int):
     k = waveNum(freq)
     (freqG, thetaG) = np.meshgrid(freq, theta)
-    E = np.array(initialCzz)
-    prev = 0.0
+    initialEstimate = mlmEstimate(zxyMatrixInverse(Gmn), thetaG, k, d)
+    E = Gmn[0][0]#np.array(spectrumToCrossSpectrum(initialEstimate, k, theta, d, freq)[0][0])
+    prev = 0
     curr = initialEstimate
-    for i in range(10): #iterative mlm from benoit (1984)
+    for i in range(20): #iterative mlm from benoit (1984)
+        crossEstimate = spectrumToCrossSpectrum(E*curr, k, theta, d, freq) #calculate the cross spectra of the new estimate
+        E = crossEstimate[0][0]
         lamb = initialEstimate - prev
         eFactor = (np.abs(lamb)**(betaHP + 1.0))/(lamb * gammaHP)
         #curr = prev + eFactor #adjust the mlm estimate 
-        crossEstimate = spectrumToCrossSpectrum(E/np.array(lamb), k, theta, d, freq) #calculate the cross spectra of the new estimate
-        E = crossEstimate[0][0]
-        #prev = curr
-        curr = mlmEstimate(crossEstimate, thetaG, k, d) + eFactor #calculate a new estimate using the estimated spectra
+        curr = prev + eFactor#mlmEstimate(zxyMatrixInverse(crossEstimate), thetaG, k, d) + eFactor #calculate a new estimate using the estimated spectra
+        prev = curr
+
     return curr
     
 
@@ -292,8 +345,8 @@ def zeroOrderFourier(spectrum:list) -> list:
 #   Outputs: a1, b1
 # 
 def firstOrderFourier(zx:list, xx:list, yy:list, zz:list, zy:list) -> list:
-    a1 = 1 * zy/np.sqrt((xx + yy) * zz)
-    b1 = 1 * zx/np.sqrt((xx + yy) * zz)
+    a1 = 1 * zx/np.sqrt((xx + yy) * zz)
+    b1 = 1 * zy/np.sqrt((xx + yy) * zz)
     return a1, b1
 
 #(NOAA) This function calculates a2, b2, the first fourier coeff.
@@ -303,8 +356,10 @@ def firstOrderFourier(zx:list, xx:list, yy:list, zz:list, zy:list) -> list:
 #   Outputs: a2, b2
 # 
 def secondOrderFourier(xx:list, yy:list, zz:list, xy:list) -> list:
-    a2 = (yy-xx)/np.sqrt(zz*(xx + yy))
-    b2 = (2 * xy)/np.sqrt(zz*(xx + yy))
+    a2 = (xx-yy)/(xx + yy)
+    b2 = (2 * xy)/(xx + yy)
+    #a2 = (xx-yy)/(xx+yy)
+    #b2 = (2 * xy)/(xx+yy)
     return a2, b2
 
 #This function estimates the wavenumber from the frequency using the deep water dispersion relation:
