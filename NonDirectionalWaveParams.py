@@ -6,7 +6,7 @@ import calendar
 
 # stn = '188'
 # stn = '236'
-stn = '045'
+stn = '222'
 
 
 start_date = "05/21/2008 09:00"  # MM/DD/YYYY HH:MM

@@ -18,9 +18,96 @@ import csv
 import sys
 import matplotlib.pyplot as plt
 import matplotlib.colors as clr
+from matplotlib import colors
 from matplotlib import cm
+'''
+def mkColorTable(name:str, nColors:int) -> colors.Colormap:
+
+    # Make an nColors color temperature bar using the 7 color method
+
+    # 7 fixed point RGB colors
+
+    colors7 = np.array(((0,0,0), (0,0,1), (0,1,1), (0,1,0), (1,1,0), (1,0,0), (1,1,1)))
+
+    cmap = colors.LinearSegmentedColormap.from_list("heatmap", colors7, N=nColors, gamma=1.0)
+
+    return cmap
+'''
+def mkColorTable(name:str, nColors:int=256,
+
+        threshold:float=None, thresholdColor:tuple=None, fixedColors=None,
+
+        eps:float=1e-30) -> colors.Colormap:
+
+    # Make an nColors color temperature bar using the linear segmented color method
+
+    # including a threshold color for the lower portion
 
 
+    if thresholdColor is None: thresholdColor = (0, 0.498, 1) # Azure
+
+    if fixedColors is None: # 7 fixed point RGB colors
+
+        fixedColors = np.array((
+
+            (0,0,0), 
+
+            (0,0,1),
+
+            (0,1,1), 
+
+            (0,1,0), 
+
+            (1,1,0), 
+
+            (1,0,0), 
+
+            (1,1,1),
+
+            ))
+
+
+    # Each entry is (x, y0, y1), where 
+
+    # y(x) -> y1_i at x_i to y0_i+1 at x_i+1
+
+    clist = []
+
+    
+
+    if (threshold is not None) and (threshold > eps) and (threshold < (1-eps)):
+
+        clist.append([0, thresholdColor]) # Constant color from 0 to threshold
+
+        clist.append([threshold - eps, thresholdColor])
+
+        offset = threshold
+
+    else:
+
+        offset = 0
+
+
+    stepsize = (1 - offset) / (len(fixedColors) - 1)
+
+
+    for i in range(len(fixedColors)):
+
+        clist.append([offset, fixedColors[i]])
+
+        offset += stepsize 
+
+        
+
+    clist[-1][0] = 1 # Make sure last point is at 1
+
+    print(clist)
+
+    
+
+    cmap = colors.LinearSegmentedColormap.from_list("heatmap", clist, N=nColors, gamma=1.0)
+
+    return cmap
 
 def main():
 
@@ -76,10 +163,10 @@ def polar_plot(data, min_period, max_period):
 	# define coordinates
 
 	# thetas
-	azimuths = np.radians(np.linspace(0, 360, data.shape[1]))	# theta values
+	azimuths = np.radians(np.linspace(5, 365, data.shape[1]))	# theta values
 
 	# radii
-	zeniths = np.linspace(0.025, 0.58, data.shape[0])	# radius values
+	zeniths = np.linspace(min_period, max_period, data.shape[0])	# radius values
 
 	# create variables theta and r as 2D matrices from meshing zeniths and azimuths
 	theta, r = np.meshgrid(azimuths, zeniths)
@@ -137,9 +224,11 @@ def polar_plot(data, min_period, max_period):
 
 	ax.tick_params(axis="x", direction="in", pad=-19) # Theta labels inside plot
 
+	cmap2 = mkColorTable("myHeatMap", nLevels, threshold, thresholdColor="azure");
 
 	# use contourf to create the heat map
-	colorax = ax.contourf(theta, r, data, levels=levels, colors=cmap)
+	#colorax = ax.contourf(theta, r, data, levels=levels, colors=cmap)
+	colorax = ax.contourf(theta, r, data, levels=levels, cmap=cmap2)
 
 	# polar plot limits, creates empty inner circle
 	# ax.set_rlim(top=1/3.2, bottom=-0.08)

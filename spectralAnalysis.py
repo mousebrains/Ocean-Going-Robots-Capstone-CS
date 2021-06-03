@@ -444,3 +444,32 @@ def displacementToRfft(df:pd.DataFrame, fs:int, nseg:int) -> pd.DataFrame:
 
     mlm = mlmEstimate(Ds, thetaG, k, d)
     return rf, mlm
+
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--csv', type=str, metavar ="data.csv", required=True, 
+        help = "File name of the csv data to read")
+    parser.add_argument('sample', type=float, nargs="?", metavar ="fs", default="10",
+        help = "samplerate")
+    #parser.add_argument('window', type=str, nargs="?", metavar ="wind", default="han",
+    #    help = "Windowing function to apply")
+    #parser.add_argument('nseg', type=int, nargs="?", metavar ="nseg", default=1200, 
+    #    help = "Number of samples per segment for welch's method")
+    args = parser.parse_args()
+
+    try:
+        fp = open(args.csv, 'r')
+    except FileNotFoundError:
+        raise Exception("No CSV file with the given name found.") from None
+
+    df = pd.DataFrame(pd.read_csv(fp))
+ 
+    #print(np.fft.rfft())
+    #first parameter = dataframe of displacements or accelerations
+    #second parameter = fft method: rfft or welch
+    #third parameter = dsf estimation method
+    #fourth parameter = sample rate
+    ff, sp = displacementToWelch(df, "mlm", 1.28, "boxcar", np.floor(len(df)/8), True, "density")
+    print(ff)

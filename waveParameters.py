@@ -37,15 +37,7 @@ def waveParameters(df:pd.DataFrame, Ds:list):
     pf["Tav"] = pf.m0 / pf.m1
     pf["Tzero"] = np.sqrt(pf.m0 / pf.m2)
     pf["Tp"] = 1/df.freq[np.argmax(df.Czz)]
-    #index = np.where(df.freq == 1/pf.Tp)[0] #np.around((1/pf.Tp) / pf.binSize) 
-    #print(np.argmax(df.Czz), index)
-    theta = np.radians(np.arange(0, 360+1, 5))
-    a1Hat = 1/pf["m0"] * scipy.integrate.simpson(df.a1 * df.Czz, dx=pf['binSize'])
-    b1Hat = 1/pf["m0"] * scipy.integrate.simpson(df.b1 * df.Czz, dx=pf['binSize'])
-    index = np.argmax(df.Czz)
-    a1Peak = df.a1[index]
-    b1Peak = df.b1[index] 
-    #print(np/shape(Ds))
+
     max = 0
     ind = 0
     for i in range(73):
@@ -54,6 +46,7 @@ def waveParameters(df:pd.DataFrame, Ds:list):
             ind = i
             max = temp
     pf['Dpeak'] = ind * 5
+
 
     return pf
 
@@ -84,6 +77,7 @@ if __name__ == "__main__":
     #fourth parameter = sample rate
     ff, sp = analyzeWaveData(df, "welch", "mlm", args.sample)
     #print(waveParameters(ff, sp))
+
 
 
 
