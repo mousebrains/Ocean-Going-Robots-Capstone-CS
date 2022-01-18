@@ -244,7 +244,7 @@ def process(fn:str, args:argparse.ArgumentParser) -> None:
                 ax[6].plot(fMid, b2, "-")
                 plotit(ax[7], fMid, wave.M2[i, :], "m2")
                 ax[7].plot(fMid, m2, "-")
-                plotit(ax[8], fMid, wave.N2[i, :], "m2", "Frequency (Hz)", True)
+                plotit(ax[8], fMid, wave.N2[i, :], "n2", "Frequency (Hz)", True)
                 ax[8].plot(fMid, n2, "-")
 
                 plt.show()
