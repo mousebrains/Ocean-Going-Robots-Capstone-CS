@@ -148,6 +148,9 @@ def process(fn:str, args:argparse.ArgumentParser) -> None:
             zyBand = (q * zyPSD).sum(axis=1) / cnt
             zzBand = (q * zzPSD).sum(axis=1) / cnt
 
+            # Zeroth order
+            a0 = zzBand
+
             # First order
             denom = np.sqrt(zzBand * (xxBand + yyBand))
             a1 =  zxBand.imag / denom
@@ -166,18 +169,19 @@ def process(fn:str, args:argparse.ArgumentParser) -> None:
             print(df)
 
             # Spectral moments
-            m0 = (zzBand * bandwidth).sum()
-            m1 = (zzBand * bandwidth * fMid).sum()
-            m2 = (zzBand * bandwidth * fMid * fMid).sum()
+            m0 = (a0 * bandwidth).sum()
+            mm1 = (a0 * bandwidth / fMid).sum() # m_{-1}
+            m1 = (a0 * bandwidth * fMid).sum()
+            m2 = (a0 * bandwidth * fMid * fMid).sum()
 
-            iDominant = zzBand.argmax() # Peak location
+            iDominant = a0.argmax() # Peak location
 
             # Centered Fourier coefficients
             theta0 = np.degrees(np.arctan2(b1, a1)) % 360 # Horizontal angle [0,360)
             theta0 = (theta0 + declination) % 360 # Magnetic to true
             Dp = theta0[iDominant]
 
-            print("PeakPSD from CDIP", float(wave.PeakPSD[i]), "calc", zzBand.max())
+            print("PeakPSD from CDIP", float(wave.PeakPSD[i]), "calc", a0.max())
             print("Hs from CDIP", float(wave.Hs[i]), 
                     "4*sqrt(z.var0)", 4 * np.sqrt(z.var()),
                     "4*sqrt(m0)", 4 * np.sqrt(m0))
@@ -185,13 +189,16 @@ def process(fn:str, args:argparse.ArgumentParser) -> None:
                     "calc", 1/fMid[iDominant],
                     "not banded", 1/f[zzPSD.argmax()])
             print("Ta from CDIP", float(wave.Ta[i]),
-                    "from m1(CDIP)", m0 / m1)
+                    "from m0/m1", m0 / m1)
             print("Tz from CDIP", float(wave.Tz[i]),
                     "calc", Tz, "from m2(NOAA)", np.sqrt(m0/m2))
+            print("T_E", mm1 / m0, "mean energy period")
+            print("T_E/Tp", (mm1 / m0) / (1 / fMid[iDominant]), \
+                    "wind(0.85-0.88) swell(0.93-0.97)")
             print("Dp", wave.Dp[i].to_numpy(), 
                     "from CDIP a1,b1",
                     float(np.degrees(np.arctan2(wave.B1[i,iDominant], wave.A1[i,iDominant]))) % 360,
-                    "from calc a1,b1", Dp)
+                    "from calc a1,b1", Dp, "degrees")
 
             # Calculate centered Fourier Coefficients, m2 and n2 in geographic coordinates
             theta0 = np.radians(theta0) # Back to radians from degrees
