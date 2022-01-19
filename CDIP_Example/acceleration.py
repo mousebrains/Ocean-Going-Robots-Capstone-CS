@@ -162,11 +162,6 @@ def process(fn:str, args:argparse.ArgumentParser) -> None:
 
             # Zeroth order
             a0 = zzBand / np.square(np.square(2 * np.pi * fMid))
-            # plt.plot(fMid, zzBand, "-")
-            # plt.plot(fMid, a0, "-")
-            # plt.grid()
-            # plt.show()
-            # sys.exit(1)
 
             # First order
             denom = np.sqrt(zzBand * (xxBand + yyBand))

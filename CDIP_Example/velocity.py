@@ -160,11 +160,6 @@ def process(fn:str, args:argparse.ArgumentParser) -> None:
 
             # Zeroth order
             a0 = zzBand / np.square(2 * np.pi * fMid)
-            # plt.plot(fMid, zzBand, "-")
-            # plt.plot(fMid, a0, "-")
-            # plt.grid()
-            # plt.show()
-            # sys.exit(1)
 
             # First order
             denom = np.sqrt(zzBand * (xxBand + yyBand))
@@ -216,6 +211,7 @@ def process(fn:str, args:argparse.ArgumentParser) -> None:
                     "from calc a1,b1", Dp, "degrees")
 
             # Calculate centered Fourier Coefficients, m2 and n2 in geographic coordinates
+
             theta0 = np.radians(theta0) # Back to radians from degrees
             m1 = np.sqrt(a1**2 + b1**2)
             m2 =  a2 * np.cos(2 * theta0) + b2 * np.sin(2 * theta0)
