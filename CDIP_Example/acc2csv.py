@@ -82,12 +82,12 @@ def process(fn:str, args:argparse.ArgumentParser) -> None:
 
         if args.meta and len(args.meta) > 0: # Output meta data
             df = pd.DataFrame()
-            df["fs"] = fs
-            df["latitude"] = float(meta.DeployLatitude)
-            df["longitude"] = float(meta.DeployLongitude)
-            df["depth"] = depth
-            df["declination"] = declination
-            df.to_csv(args.meta)
+            df["fs"] = [fs]
+            df["latitude"] = [float(meta.DeployLatitude)]
+            df["longitude"] = [float(meta.DeployLongitude)]
+            df["depth"] = [depth]
+            df["declination"] = [declination]
+            df.to_csv(args.meta, index=False)
 
         if args.acceleration and len(args.acceleration) > 0: # Output acceleration data
             df = pd.DataFrame()
