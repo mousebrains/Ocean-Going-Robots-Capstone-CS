@@ -1,0 +1,223 @@
+netcdf \067.20220102_0000.20220102_0600 {
+
+// global attributes:
+		:naming_authority = "edu.ucsd.cdip" ;
+		:keywords_vocabulary = "Global Change Master Directory (GCMD) Earth Science Keywords" ;
+		:date_created = "2022-01-03T17:30:31Z" ;
+		:date_issued = "2022-01-03T17:30:31Z" ;
+		:date_modified = "2022-01-03T17:30:31Z" ;
+		:creator_name = "Coastal Data Information Program, SIO/UCSD" ;
+		:creator_url = "http://cdip.ucsd.edu" ;
+		:creator_email = "www@cdip.ucsd.edu" ;
+		:publisher_name = "Coastal Data Information Program, SIO/UCSD" ;
+		:publisher_url = "http://cdip.ucsd.edu" ;
+		:publisher_email = "www@cdip.ucsd.edu" ;
+		:institution = "Scripps Institution of Oceanography, University of California San Diego" ;
+		:project = "Coastal Data Information Program (CDIP)" ;
+		:processing_level = "QA/QC information available at http://cdip.ucsd.edu/documentation" ;
+		:standard_name_vocabulary = "CF Standard Name Table (v29, 08 July 2015)" ;
+		:Conventions = "ACDD-1.3, CF-1.6" ;
+		:license = "These data may be redistributed and used without restriction." ;
+		:cdm_data_type = "Station" ;
+		:featureType = "timeSeries" ;
+		:ncei_template_version = "NCEI_NetCDF_TimeSeries_Orthogonal_Template_v2.0" ;
+		:references = "http://cdip.ucsd.edu/documentation" ;
+		:uuid = "85321B7F-0CD7-4202-9CE6-9A8054FF7E4C" ;
+		:title = "Directional wave and sea surface temperature measurements collected in situ by Datawell DWR-M3 directional buoy located near SAN NICOLAS ISLAND, CA from 2020/12/02 21:00:00 to 2022/01/03 17:26:40." ;
+		:summary = "Directional wave and sea surface temperature measurements collected in situ by Datawell DWR-M3 directional buoy located near SAN NICOLAS ISLAND, CA from 2020/12/02 21:00:00 to 2022/01/03 17:26:40. A total of 18273 wave samples were analyzed for this site, where the water depth is approximately 262 meters." ;
+		:keywords = "EARTH SCIENCE, OCEANS, OCEAN WAVES, GRAVITY WAVES, WIND WAVES, SIGNIFICANT WAVE HEIGHT, WAVE FREQUENCY, WAVE PERIOD, WAVE SPECTRA, OCEAN TEMPERATURE, SEA SURFACE TEMPERATURE, WATER TEMPERATURE, OCEAN, PACIFIC OCEAN, EASTERN PACIFIC OCEAN" ;
+		:cdip_station_id = "067" ;
+		:wmo_id = "46219" ;
+		:id = "CDIP_067p1_20201202-20220103" ;
+		:history = "2022-01-03T17:30:32Z: dataset created; multiple updates - last run program, arguments: process_dw_realtime v2.0, is70351_202201031730 If date_modified is after date_created, contact CDIP for details of changes." ;
+		:comment = "This dataset contains data as acquired in real-time, the QC performed upon it is not as complete as for historic CDIP datasets. All values are decoded directly from the instruments in accordance with the manufacturers documentation EXCEPT for those with the attribute :additional_processing which describes further data handling performed by CDIP." ;
+		:acknowledgment = "CDIP is primarily supported by the U.S. Army Corps of Engineers (USACE). Station partner: NAVAIR ; Field operator: CDIP/NAVAIR" ;
+		:metadata_link = "http://cdip.ucsd.edu/metadata/067p1" ;
+		:contributor_name = "CDIP/NAVAIR, NAVAIR/USACE" ;
+		:contributor_role = "station operation, station funding" ;
+		:geospatial_lat_min = 33.21598f ;
+		:geospatial_lat_max = 33.22258f ;
+		:geospatial_lat_units = "degrees_north" ;
+		:geospatial_lat_resolution = 0.0001f ;
+		:geospatial_lon_min = -119.8762f ;
+		:geospatial_lon_max = -119.8683f ;
+		:geospatial_lon_units = "degrees_east" ;
+		:geospatial_lon_resolution = 0.0001f ;
+		:geospatial_vertical_min = 0.f ;
+		:geospatial_vertical_max = 0.f ;
+		:geospatial_vertical_units = "meters" ;
+		:geospatial_vertical_origin = "sea surface" ;
+		:geospatial_vertical_positive = "up" ;
+		:geospatial_vertical_resolution = 1.f ;
+		:time_coverage_start = "2020-12-02T21:00:00Z" ;
+		:time_coverage_end = "2022-01-03T17:26:40Z" ;
+		:time_coverage_duration = "P396DT20H27M" ;
+		:time_coverage_resolution = "PT30M" ;
+		:source = "insitu observations" ;
+		:platform = "metaPlatform" ;
+		:instrument = "metaInstrumentation" ;
+		:DODS.strlen = 0 ;
+		:DODS.dimName = "metaStationNameLength" ;
+
+group: Meta {
+  variables:
+  	string name ;
+  	float DeployLatitude ;
+  		DeployLatitude:_FillValue = NaNf ;
+  	float DeployLongitude ;
+  		DeployLongitude:_FillValue = NaNf ;
+  	float WaterDepth ;
+  		WaterDepth:_FillValue = NaNf ;
+  	float Declination ;
+  		Declination:_FillValue = NaNf ;
+  } // group Meta
+
+group: Wave {
+  dimensions:
+  	t = 13 ;
+  	f = 64 ;
+  	bounds = 2 ;
+  variables:
+  	ubyte FlagPrimary(t) ;
+  	ubyte FlagSecondary(t) ;
+  	float Hs(t) ;
+  		Hs:_FillValue = NaNf ;
+  	float Ta(t) ;
+  		Ta:_FillValue = NaNf ;
+  	float Tp(t) ;
+  		Tp:_FillValue = NaNf ;
+  	float Tz(t) ;
+  		Tz:_FillValue = NaNf ;
+  	float Dp(t) ;
+  		Dp:_FillValue = NaNf ;
+  	float PeakPSD(t) ;
+  		PeakPSD:_FillValue = NaNf ;
+  	int SourceIndex(t) ;
+  	ubyte FreqFlagPrimary(f) ;
+  	ubyte FreqFlagSecondary(f) ;
+  	float Bandwidth(f) ;
+  		Bandwidth:_FillValue = NaNf ;
+  	float EnergyDensity(t, f) ;
+  		EnergyDensity:_FillValue = NaNf ;
+  	float MeanDirection(t, f) ;
+  		MeanDirection:_FillValue = NaNf ;
+  	float A1(t, f) ;
+  		A1:_FillValue = NaNf ;
+  	float B1(t, f) ;
+  		B1:_FillValue = NaNf ;
+  	float A2(t, f) ;
+  		A2:_FillValue = NaNf ;
+  	float B2(t, f) ;
+  		B2:_FillValue = NaNf ;
+  	float M2(t, f) ;
+  		M2:_FillValue = NaNf ;
+  	float N2(t, f) ;
+  		N2:_FillValue = NaNf ;
+  	float CheckFactor(t, f) ;
+  		CheckFactor:_FillValue = NaNf ;
+  	float Spread(t, f) ;
+  		Spread:_FillValue = NaNf ;
+  	int64 TimeBounds(t, bounds) ;
+  		TimeBounds:units = "seconds since 2022-01-02 00:00:00" ;
+  		TimeBounds:calendar = "proleptic_gregorian" ;
+  	float FreqBounds(f, bounds) ;
+  		FreqBounds:_FillValue = NaNf ;
+  	float f(f) ;
+  		f:_FillValue = NaNf ;
+  	int64 t(t) ;
+  		t:units = "minutes since 2022-01-02 00:00:00" ;
+  		t:calendar = "proleptic_gregorian" ;
+  	int64 bounds(bounds) ;
+  } // group Wave
+
+group: SST {
+  dimensions:
+  	t = 12 ;
+  	bounds = 2 ;
+  variables:
+  	ubyte FlagPrimary(t) ;
+  	float T(t) ;
+  		T:_FillValue = NaNf ;
+  	float RefT(t) ;
+  		RefT:_FillValue = NaNf ;
+  	int64 TimeBounds(t, bounds) ;
+  		TimeBounds:units = "seconds since 2022-01-02 00:27:47" ;
+  		TimeBounds:calendar = "proleptic_gregorian" ;
+  	int64 t(t) ;
+  		t:units = "minutes since 2022-01-02 00:28:20" ;
+  		t:calendar = "proleptic_gregorian" ;
+  	int64 bounds(bounds) ;
+  } // group SST
+
+group: GPS {
+  dimensions:
+  	t = 12 ;
+  	bounds = 2 ;
+  variables:
+  	ubyte Flag(t) ;
+  	float Latitude(t) ;
+  		Latitude:_FillValue = NaNf ;
+  	float Longitude(t) ;
+  		Longitude:_FillValue = NaNf ;
+  	int SourceIndex(t) ;
+  	int64 TimeBounds(t, bounds) ;
+  		TimeBounds:units = "minutes since 2022-01-02 00:20:00" ;
+  		TimeBounds:calendar = "proleptic_gregorian" ;
+  	int64 t(t) ;
+  		t:units = "minutes since 2022-01-02 00:21:00" ;
+  		t:calendar = "proleptic_gregorian" ;
+  	int64 bounds(bounds) ;
+  } // group GPS
+
+group: DWR {
+  dimensions:
+  	t = 13 ;
+  	bounds = 2 ;
+  variables:
+  	int BatteryLevel(t) ;
+  	int BatteryWeeksOfLife(t) ;
+  	float zAccelerometerOffset(t) ;
+  		zAccelerometerOffset:_FillValue = NaNf ;
+  	float xAccelerometerOffset(t) ;
+  		xAccelerometerOffset:_FillValue = NaNf ;
+  	float yAccelerometerOffset(t) ;
+  		yAccelerometerOffset:_FillValue = NaNf ;
+  	float Orientation(t) ;
+  		Orientation:_FillValue = NaNf ;
+  	float Inclination(t) ;
+  		Inclination:_FillValue = NaNf ;
+  	int SourceIndex(t) ;
+  	int64 TimeBounds(t, bounds) ;
+  		TimeBounds:units = "minutes since 2022-01-02 00:00:00" ;
+  		TimeBounds:calendar = "proleptic_gregorian" ;
+  	int64 t(t) ;
+  		t:units = "minutes since 2022-01-02 00:00:00" ;
+  		t:calendar = "proleptic_gregorian" ;
+  	int64 bounds(bounds) ;
+  } // group DWR
+
+group: XYZ {
+  dimensions:
+  	t = 29696 ;
+  variables:
+  	int64 StartTime ;
+  		StartTime:units = "days since 2020-12-02 21:00:00" ;
+  		StartTime:calendar = "proleptic_gregorian" ;
+  	float SampleRate ;
+  		SampleRate:_FillValue = NaNf ;
+  	float FilterDelay ;
+  		FilterDelay:_FillValue = NaNf ;
+  	float x(t) ;
+  		x:_FillValue = NaNf ;
+  	float y(t) ;
+  		y:_FillValue = NaNf ;
+  	float z(t) ;
+  		z:_FillValue = NaNf ;
+  	ubyte FlagPrimary(t) ;
+  	ubyte FlagSecondary(t) ;
+  	int SourceIndex(t) ;
+  	int64 t(t) ;
+  		t:units = "nanoseconds since 2022-01-02 00:00:00.763061656" ;
+  		t:calendar = "proleptic_gregorian" ;
+  } // group XYZ
+}

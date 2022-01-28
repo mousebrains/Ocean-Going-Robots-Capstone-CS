@@ -41,3 +41,15 @@ Dp 201.84375 from CDIP a1,b1 201.84375 from calc a1,b1 201.09061351073368
 </pre>
 
 * No attempt has been made to take out the noise
+
+- `WaveNumber.py` calculates the wave number given a period and water depth
+- `general.py` calculates wave parameters for displacement, velocity, or acceleration
+- `velocity.py` calculates wave parameters for velocity
+- `acceleration.py` calculates wave parameters for acceleration
+- `acc2csv.py` extracts NetCDF data into CSV files
+  - `displacement.csv` is the CDIP displacement data
+  - `acceleration.csv` is the acceleration as calculated from the CDIP displacement data
+  - `meta.csv` is the CDIP metadata
+  - `wave.csv` is the CDIP wave data
+  - `freq.csv` is the CDIP wave frequency bin data
+- `header.dump` is the output of `ncdump -h 067.20220102_0000.20220102_0600.nc`
