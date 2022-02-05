@@ -42,12 +42,12 @@ from WaveNumber import waveNumber
 
 def calcPSD(xFFT:np.array, yFFT:np.array, fs:float) -> np.array:
     nfft = xFFT.size
-    qEven = nfft % 2
-    n = (nfft - 2 * qEven) * 2
+    qOdd = nfft % 2
+    n = (nfft -  qOdd) * 2 # Number of data points input to FFT
     psd = (xFFT.conjugate() * yFFT) / (fs * n)
-    if qEven:
-        psd[1:] *= 2 # Real FFT -> double for non-zero freq
-    else: # last point unpaired in Nyquist freq
+    if not qOdd:       # Even number of FFT bins
+        psd[1:] *= 2   # Real FFT -> double for non-zero freq
+    else:              # last point unpaired in Nyquist freq
         psd[1:-1] *= 2 # Real FFT -> double for non-zero freq
     return psd
 

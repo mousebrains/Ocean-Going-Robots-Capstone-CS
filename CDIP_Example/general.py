@@ -62,7 +62,7 @@ def calcMeasurements(xyz:xr.Dataset, fs:float, args:ArgumentParser) \
         return (calcVelocity(x, fs), calcVelocity(y, fs), calcVelocity(z, fs))
     if args.acceleration:
         return (calcAcceleration(x, fs), calcAcceleration(y, fs), calcAcceleration(z, fs))
-    return (x.to_numpy(), y.to_numpy(), z.to_numpy())
+    return (x, y, z)
 
 def calcA0(zzPSD:np.array, f:np.array, args:ArgumentParser) -> np.array:
     a0 = zzPSD.copy()
@@ -77,12 +77,12 @@ def calcA0(zzPSD:np.array, f:np.array, args:ArgumentParser) -> np.array:
 
 def calcPSD(xFFT:np.array, yFFT:np.array, fs:float) -> np.array:
     nfft = xFFT.size
-    qEven = nfft % 2
-    n = (nfft - 2 * qEven) * 2 # Sample size from size of FFT
+    qOdd = nfft % 2
+    n = (nfft -  qOdd) * 2 # Number of data points input to FFT
     psd = (xFFT.conjugate() * yFFT) / (fs * n)
-    if qEven:
-        psd[1:] *= 2 # Real FFT -> double for non-zero freq
-    else: # last point unpaired in Nyquist freq
+    if not qOdd:       # Even number of FFT bins
+        psd[1:] *= 2   # Real FFT -> double for non-zero freq
+    else:              # last point unpaired in Nyquist freq
         psd[1:-1] *= 2 # Real FFT -> double for non-zero freq
     return psd
 
