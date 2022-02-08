@@ -65,6 +65,8 @@ def zeroCrossingAverage(z:np.array, fs:float) -> float:
     return 2 * dt.mean() # 2 times the half wave zero crossing average time
 
 def calcAcceleration(x:np.array, fs:float) -> np.array:
+    x = x.copy() # Local copy
+    x[x<-999.9] = None
     dx2 = np.zeros(x.shape)
     dx2[2:] = np.diff(np.diff(x))
     dx2[0:2] = dx2[2]

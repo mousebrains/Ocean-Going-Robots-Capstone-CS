@@ -97,9 +97,14 @@ def process(fn:str, args:argparse.ArgumentParser) -> None:
             print("FlagSecondary", wave.FlagSecondary[i].to_numpy())
 
             t = xyz.t[q].to_numpy() # Time of sample
-            x = xyz.x[q].to_numpy() # x is northward
-            y = xyz.y[q].to_numpy() # y is eastward
-            z = xyz.z[q].to_numpy() # z is upwards
+            x = xyz.x[q].to_numpy().copy() # x is northward
+            y = xyz.y[q].to_numpy().copy() # y is eastward
+            z = xyz.z[q].to_numpy().copy() # z is upwards
+
+            # Nan missing data
+            x[x<-999.9] = None
+            y[y<-999.9] = None
+            z[z<-999.9] = None
 
             # Denoising should happen here
 

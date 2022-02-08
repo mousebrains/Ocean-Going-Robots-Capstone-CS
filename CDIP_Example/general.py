@@ -54,9 +54,12 @@ def calcAcceleration(x:np.array, fs:float) -> np.array:
 
 def calcMeasurements(xyz:xr.Dataset, fs:float, args:ArgumentParser) \
         -> tuple[np.array, np.array, np.array]:
-    x = xyz.x.to_numpy() # Northwards
-    y = xyz.y.to_numpy() # Eastwards
-    z = xyz.z.to_numpy() # Upwards
+    x = xyz.x.to_numpy().copy() # Northwards
+    y = xyz.y.to_numpy().copy() # Eastwards
+    z = xyz.z.to_numpy().copy() # Upwards
+    x[x<-999.9] = None
+    y[y<-999.9] = None
+    z[z<-999.9] = None
 
     if args.velocity:
         return (calcVelocity(x, fs), calcVelocity(y, fs), calcVelocity(z, fs))
